@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Time Box - Gerenciamento de Tempo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Cor de fundo suave padrão */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            transition: background-color 0.3s ease; /* Transição suave para o modo escuro */
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        /* Estilos do Modo Escuro */
+        body.dark-mode {
+            background-color: #1a202c; /* Fundo escuro */
+        }
+        .container.dark-mode {
+            background-color: #2d3748; /* Fundo do contêiner escuro */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+        .dark-mode .logo {
+            border-color: #63b3ed; /* Cor do logo no modo escuro */
+            color: #63b3ed;
+        }
+        .dark-mode .logo::before {
+            background: linear-gradient(45deg, #63b3ed 0%, #a0aec0 100%);
+        }
+        .dark-mode .logo-text, .dark-mode .section-title, .dark-mode label, .dark-mode .time-label, .dark-mode .grid-header {
+            color: #e2e8f0; /* Cor do texto no modo escuro */
+        }
+        .dark-mode .input-field, .dark-mode .textarea-field, .dark-mode .task-input, .dark-mode .category-select {
+            background-color: #4a5568; /* Fundo dos inputs no modo escuro */
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+        .dark-mode .input-field:focus, .dark-mode .task-input:focus, .dark-mode .category-select:focus {
+            border-color: #63b3ed;
+            box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.25);
+        }
+        .dark-mode .grid-header, .dark-mode .grid-cell {
+            background-color: #2d3748; /* Fundo da grade no modo escuro */
+            border-color: #4a5568;
+        }
+        .dark-mode .time-label {
+            background-color: #4a5568; /* Fundo da label de hora no modo escuro */
+        }
+        .dark-mode .line-through {
+            color: #718096; /* Cor do tachado no modo escuro */
+        }
+        /* Assegura que as cores das categorias apareçam no modo escuro */
+        .dark-mode .personal-category-outline {
+            border-left-color: #3b82f6; /* Azul */
+        }
+        .dark-mode .professional-category-outline {
+            border-left-color: #22c55e; /* Verde */
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+            }
+            .left-panel {
+                flex: 1;
+                max-width: 350px;
+            }
+            .right-panel {
+                flex: 2;
+            }
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .logo {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #3b82f6;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-right: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        .logo::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #3b82f6 0%, #60a5fa 100%);
+            opacity: 0.1;
+            transform: rotate(15deg) scale(1.2);
+        }
+        .logo-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #374151;
+            transition: border-color 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+        .textarea-field {
+            min-height: 200px;
+            resize: vertical;
+        }
+        .time-grid {
+            display: grid;
+            grid-template-columns: 60px 1fr 1fr;
+            gap: 1px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .grid-header, .grid-cell {
+            padding: 10px;
+            background-color: #f9fafb;
+            text-align: center;
+            border-bottom: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
+            display: flex; /* Para alinhar input e select */
+            flex-direction: column; /* Em coluna no mobile */
+            align-items: flex-start; /* Alinha o conteúdo à esquerda */
+            gap: 5px; /* Espaçamento entre os elementos da célula */
+            position: relative; /* Para a borda de categoria */
+        }
+        @media (min-width: 768px) {
+            .grid-cell {
+                flex-direction: row; /* Em linha no desktop */
+                align-items: center;
+            }
+        }
+        .grid-header {
+            font-weight: 600;
+            background-color: #e5e7eb;
+            color: #4b5563;
+        }
+        .grid-cell:nth-child(3n) {
+            border-right: none;
+        }
+        .grid-cell:nth-last-child(-n+3) {
+            border-bottom: none;
+        }
+        .time-label {
+            background-color: #f3f4f6;
+            font-weight: 500;
+            color: #4b5563;
+            justify-content: center; /* Centraliza a hora */
+        }
+        .task-input {
+            width: 100%;
+            height: 100%; /* Permite que o input ocupe a altura disponível */
+            border: none;
+            background-color: transparent;
+            font-size: 0.95rem;
+            color: #374151;
+            padding: 0;
+            text-align: left;
+            flex-grow: 1; /* Permite que o input cresça */
+        }
+        .task-input:focus {
+            outline: none;
+        }
+        .category-select {
+            padding: 4px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #4b5563;
+            background-color: #f9fafb;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            width: auto; /* Largura automática para o select */
+            flex-shrink: 0; /* Não encolhe */
+        }
+        .category-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        /* Estilos de borda para categorias */
+        .personal-category-outline {
+            border-left: 4px solid #3b82f6; /* Azul */
+        }
+        .professional-category-outline {
+            border-left: 4px solid #22c55e; /* Verde */
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+            flex-wrap: wrap; /* Quebra de linha para botões em telas pequenas */
+        }
+        .clear-button, .save-button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            flex-grow: 1;
+            text-align: center;
+        }
+        .clear-button {
+            background-color: #ef4444;
+            color: white;
+        }
+        .clear-button:hover {
+            background-color: #dc2626;
+        }
+        .save-button {
+            background-color: #22c55e;
+            color: white;
+        }
+        .save-button:hover {
+            background-color: #16a34a;
+        }
+        /* Estilo para texto tachado */
+        .line-through {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+
+        /* Botão de alternância de modo escuro */
+        .dark-mode-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #cbd5e0; /* Cor de fundo padrão */
+            color: #4a5568;
+            padding: 8px 12px;
+            border-radius: 9999px; /* Formato de pílula */
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .dark-mode-toggle:hover {
+            background-color: #a0aec0;
+        }
+        .dark-mode-toggle.dark-mode {
+            background-color: #4a5568; /* Cor de fundo no modo escuro */
+            color: #e2e8f0;
+        }
+        .dark-mode-toggle.dark-mode:hover {
+            background-color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+    <div class="dark-mode-toggle" id="dark-mode-toggle">
+        <svg class="w-5 h-5 sun-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.459 4.591a1 1 0 01-1.396 1.402l-1.47-1.47a1 1 0 011.402-1.396l1.47 1.47zm-4.143-9.615a1 1 0 010 1.414L9.006 5.586a1 1 0 01-1.414-1.414l-1.47-1.47a1 1 0 011.402-1.396l1.47 1.47zM3 10a1 1 0 011-1h1a1 1 0 110 2H4a1 1 0 01-1-1zm13.065 4.591a1 1 0 011.396-1.402l1.47 1.47a1 1 0 01-1.402 1.396l-1.47-1.47zm-4.143-9.615a1 1 0 010 1.414L10.006 5.586a1 1 0 01-1.414-1.414l-1.47-1.47a1 1 0 011.402-1.396l1.47 1.47zM10 15a1 1 0 01-1 1v1a1 1 0 112 0v-1a1 1 0 01-1-1z" clip-rule="evenodd" fill-rule="evenodd"></path>
+        </svg>
+        <svg class="w-5 h-5 moon-icon" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" style="display: none;">
+            <path d="M17.292 8.614a.75.75 0 00-.01-1.06l-.01-.01c-.19-.18-1.57-.69-3.32-.69-.97 0-1.88.24-2.67.68-.8.44-1.32.96-1.63 1.25-.19.18-.32.29-.4.36l-.05.04c-.07.05-.14.09-.2.12-.07.03-.13.06-.18.08-.06.02-.1.03-.13.04-.04.01-.06.01-.08.01l-.01.01a1 1 0 01-1.414 0 1 1 0 010-1.414l.01-.01c.02-.02.04-.04.06-.06.04-.04.08-.07.12-.1.08-.07.19-.16.32-.29.31-.29.83-.81 1.63-1.25.79-.44 1.7-.68 2.67-.68 1.75 0 3.13.51 3.32.69l.01.01a.75.75 0 00.01-1.06L17.292 8.614z"></path>
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM10 4a6 6 0 100 12A6 6 0 0010 4z" clip-rule="evenodd"></path>
+        </svg>
+        <span class="mode-text">Modo Claro</span>
+    </div>
+
+    <div class="container" id="main-container">
+        <!-- Painel esquerdo: Logo, Data, Prioridades e Brain Dump -->
+        <div class="left-panel flex flex-col gap-5">
+            <div class="header">
+                <div class="logo">
+                    <!-- Novo logo de ampulheta minimalista com setas e sem conexão -->
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Linha superior da ampulheta com ponta de seta para baixo -->
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l6 6m0 0l6-6M12 12V6M12 12v6"></path>
+                        <!-- Linha inferior da ampulheta com ponta de seta para cima -->
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18l6-6m0 0l6 6M12 12v6M12 12V6"></path>
+                    </svg>
+                </div>
+                <div class="logo-text">The Time Box.</div>
+            </div>
+
+            <div class="flex items-center justify-between mb-4">
+                <label for="date" class="text-lg font-semibold text-gray-700">Data:</label>
+                <input type="date" id="date" class="input-field w-auto px-4 py-2">
+            </div>
+
+            <div>
+                <h2 class="section-title">Principais Prioridades</h2>
+                <div class="space-y-3">
+                    <!-- Prioridade 1 -->
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="priority-checkbox-1" class="form-checkbox h-5 w-5 text-blue-600 rounded-md" data-priority-id="1">
+                        <input type="text" id="priority-1" class="input-field flex-grow" placeholder="Prioridade 1">
+                    </div>
+                    <!-- Prioridade 2 -->
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="priority-checkbox-2" class="form-checkbox h-5 w-5 text-blue-600 rounded-md" data-priority-id="2">
+                        <input type="text" id="priority-2" class="input-field flex-grow" placeholder="Prioridade 2">
+                    </div>
+                    <!-- Prioridade 3 -->
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="priority-checkbox-3" class="form-checkbox h-5 w-5 text-blue-600 rounded-md" data-priority-id="3">
+                        <input type="text" id="priority-3" class="input-field flex-grow" placeholder="Prioridade 3">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="section-title">Brain Dump</h2>
+                <textarea id="brain-dump" class="input-field textarea-field" placeholder="Anote todas as suas ideias, tarefas e pensamentos aqui..."></textarea>
+            </div>
+
+            <div class="button-group">
+                <button id="save-button" class="save-button">Salvar Informações</button>
+                <button id="clear-button" class="clear-button">Limpar Tudo</button>
+            </div>
+        </div>
+
+        <!-- Painel direito: Grade de Horários -->
+        <div class="right-panel flex flex-col gap-5">
+            <h2 class="section-title">Blocos de Tempo</h2>
+            <div class="time-grid">
+                <!-- Cabeçalhos da grade -->
+                <div class="grid-header"></div>
+                <div class="grid-header">:00</div>
+                <div class="grid-header">:30</div>
+
+                <!-- Linhas de tempo -->
+                <script>
+                    // Função para gerar as linhas de tempo
+                    function generateTimeGrid() {
+                        const timeGrid = document.querySelector('.time-grid');
+                        for (let i = 5; i <= 23; i++) { // Das 5h às 23h
+                            const hour = i < 10 ? `0${i}` : `${i}`; // Formata para 05, 06, etc.
+
+                            // Célula da hora
+                            const hourLabel = document.createElement('div');
+                            hourLabel.className = 'grid-cell time-label';
+                            hourLabel.textContent = hour;
+                            timeGrid.appendChild(hourLabel);
+
+                            // Célula para :00
+                            const taskCell00 = document.createElement('div');
+                            taskCell00.className = 'grid-cell';
+                            // Adiciona um ID único para cada campo de tarefa para persistência e o seletor de categoria
+                            taskCell00.innerHTML = `
+                                <input type="text" id="task-${hour}-00" class="task-input" placeholder="Tarefa das ${hour}:00">
+                                <select id="category-${hour}-00" class="category-select" data-task-id="task-${hour}-00">
+                                    <option value="">Nenhum</option>
+                                    <option value="personal">Pessoal</option>
+                                    <option value="professional">Profissional</option>
+                                </select>
+                            `;
+                            timeGrid.appendChild(taskCell00);
+
+                            // Célula para :30
+                            const taskCell30 = document.createElement('div');
+                            taskCell30.className = 'grid-cell';
+                            // Adiciona um ID único para cada campo de tarefa para persistência e o seletor de categoria
+                            taskCell30.innerHTML = `
+                                <input type="text" id="task-${hour}-30" class="task-input" placeholder="Tarefa das ${hour}:30">
+                                <select id="category-${hour}-30" class="category-select" data-task-id="task-${hour}-30">
+                                    <option value="">Nenhum</option>
+                                    <option value="personal">Pessoal</option>
+                                    <option value="professional">Profissional</option>
+                                </select>
+                            `;
+                            timeGrid.appendChild(taskCell30);
+                        }
+                    }
+                    generateTimeGrid();
+
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const body = document.body;
+                        const mainContainer = document.getElementById('main-container');
+                        const darkModeToggle = document.getElementById('dark-mode-toggle');
+                        const sunIcon = darkModeToggle.querySelector('.sun-icon');
+                        const moonIcon = darkModeToggle.querySelector('.moon-icon');
+                        const modeText = darkModeToggle.querySelector('.mode-text');
+
+                        // Função para alternar o modo escuro
+                        function toggleDarkMode() {
+                            body.classList.toggle('dark-mode');
+                            mainContainer.classList.toggle('dark-mode');
+                            darkModeToggle.classList.toggle('dark-mode');
+
+                            const isDarkMode = body.classList.contains('dark-mode');
+                            localStorage.setItem('darkModeEnabled', isDarkMode);
+
+                            if (isDarkMode) {
+                                sunIcon.style.display = 'none';
+                                moonIcon.style.display = 'block';
+                                modeText.textContent = 'Modo Escuro';
+                            } else {
+                                sunIcon.style.display = 'block';
+                                moonIcon.style.display = 'none';
+                                modeText.textContent = 'Modo Claro';
+                            }
+                        }
+
+                        // Carregar o estado do modo escuro
+                        const savedDarkMode = localStorage.getItem('darkModeEnabled');
+                        if (savedDarkMode === 'true') {
+                            toggleDarkMode(); // Aplica o modo escuro se salvo
+                        } else if (savedDarkMode === null) {
+                            // Se nunca foi definido, verifica a preferência do sistema
+                            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                                toggleDarkMode();
+                            }
+                        }
+
+                        // Listener para o botão de alternar modo escuro
+                        darkModeToggle.addEventListener('click', toggleDarkMode);
+
+
+                        // Função para salvar os dados no localStorage
+                        function saveData() {
+                            // Salva a data
+                            localStorage.setItem('timeBoxDate', document.getElementById('date').value);
+
+                            // Salva as prioridades e o estado do checkbox
+                            for (let i = 1; i <= 3; i++) {
+                                const priorityInput = document.getElementById(`priority-${i}`);
+                                const priorityCheckbox = document.getElementById(`priority-checkbox-${i}`);
+                                if (priorityInput) {
+                                    localStorage.setItem(`timeBoxPriority-${i}`, priorityInput.value);
+                                    localStorage.setItem(`timeBoxPriorityChecked-${i}`, priorityCheckbox.checked);
+                                }
+                            }
+
+                            // Salva o brain dump
+                            localStorage.setItem('timeBoxBrainDump', document.getElementById('brain-dump').value);
+
+                            // Salva as tarefas da grade de tempo e suas categorias
+                            for (let i = 5; i <= 23; i++) {
+                                const hour = i < 10 ? `0${i}` : `${i}`;
+                                const task00 = document.getElementById(`task-${hour}-00`);
+                                const category00 = document.getElementById(`category-${hour}-00`);
+                                const task30 = document.getElementById(`task-${hour}-30`);
+                                const category30 = document.getElementById(`category-${hour}-30`);
+
+                                if (task00) {
+                                    localStorage.setItem(`timeBoxTask-${hour}-00`, task00.value);
+                                    localStorage.setItem(`timeBoxCategory-${hour}-00`, category00.value);
+                                }
+                                if (task30) {
+                                    localStorage.setItem(`timeBoxTask-${hour}-30`, task30.value);
+                                    localStorage.setItem(`timeBoxCategory-${hour}-30`, category30.value);
+                                }
+                            }
+                            console.log('Dados salvos!'); // Mensagem de confirmação no console
+                        }
+
+                        // Função para carregar os dados do localStorage
+                        function loadData() {
+                            // Carrega a data
+                            const savedDate = localStorage.getItem('timeBoxDate');
+                            if (savedDate) {
+                                document.getElementById('date').value = savedDate;
+                            }
+
+                            // Carrega as prioridades e o estado do checkbox
+                            for (let i = 1; i <= 3; i++) {
+                                const priorityInput = document.getElementById(`priority-${i}`);
+                                const priorityCheckbox = document.getElementById(`priority-checkbox-${i}`);
+                                const savedPriority = localStorage.getItem(`timeBoxPriority-${i}`);
+                                const savedPriorityChecked = localStorage.getItem(`timeBoxPriorityChecked-${i}`);
+
+                                if (priorityInput && savedPriority) {
+                                    priorityInput.value = savedPriority;
+                                }
+                                if (priorityCheckbox && savedPriorityChecked) {
+                                    priorityCheckbox.checked = (savedPriorityChecked === 'true'); // Converte string para boolean
+                                    // Aplica o tachado se o checkbox estiver marcado
+                                    if (priorityCheckbox.checked) {
+                                        priorityInput.classList.add('line-through');
+                                    } else {
+                                        priorityInput.classList.remove('line-through');
+                                    }
+                                }
+                            }
+
+                            // Carrega o brain dump
+                            const savedBrainDump = localStorage.getItem('timeBoxBrainDump');
+                            if (savedBrainDump) {
+                                document.getElementById('brain-dump').value = savedBrainDump;
+                            }
+
+                            // Carrega as tarefas da grade de tempo e suas categorias
+                            for (let i = 5; i <= 23; i++) {
+                                const hour = i < 10 ? `0${i}` : `${i}`;
+                                const task00 = document.getElementById(`task-${hour}-00`);
+                                const category00 = document.getElementById(`category-${hour}-00`);
+                                const taskCell00 = task00 ? task00.closest('.grid-cell') : null;
+
+                                const task30 = document.getElementById(`task-${hour}-30`);
+                                const category30 = document.getElementById(`category-${hour}-30`);
+                                const taskCell30 = task30 ? task30.closest('.grid-cell') : null;
+
+                                const savedTask00 = localStorage.getItem(`timeBoxTask-${hour}-00`);
+                                const savedCategory00 = localStorage.getItem(`timeBoxCategory-${hour}-00`);
+                                const savedTask30 = localStorage.getItem(`timeBoxTask-${hour}-30`);
+                                const savedCategory30 = localStorage.getItem(`timeBoxCategory-${hour}-30`);
+
+                                if (task00 && savedTask00) task00.value = savedTask00;
+                                if (category00 && savedCategory00) {
+                                    category00.value = savedCategory00;
+                                    applyCategoryOutline(taskCell00, savedCategory00);
+                                }
+                                if (task30 && savedTask30) task30.value = savedTask30;
+                                if (category30 && savedCategory30) {
+                                    category30.value = savedCategory30;
+                                    applyCategoryOutline(taskCell30, savedCategory30);
+                                }
+                            }
+                        }
+
+                        // Função para aplicar o contorno da categoria
+                        function applyCategoryOutline(cellElement, category) {
+                            if (cellElement) {
+                                // Remove classes existentes para evitar duplicidade
+                                cellElement.classList.remove('personal-category-outline', 'professional-category-outline');
+                                if (category === 'personal') {
+                                    cellElement.classList.add('personal-category-outline');
+                                } else if (category === 'professional') {
+                                    cellElement.classList.add('professional-category-outline');
+                                }
+                            }
+                        }
+
+                        // Adiciona listeners para salvar dados ao digitar (ainda mantém o salvamento automático)
+                        document.getElementById('date').addEventListener('input', saveData);
+                        document.getElementById('brain-dump').addEventListener('input', saveData);
+
+                        for (let i = 1; i <= 3; i++) {
+                            const priorityInput = document.getElementById(`priority-${i}`);
+                            const priorityCheckbox = document.getElementById(`priority-checkbox-${i}`);
+                            if (priorityInput) {
+                                priorityInput.addEventListener('input', saveData);
+                            }
+                            if (priorityCheckbox) {
+                                // Adiciona listener para o checkbox para alternar o tachado e salvar
+                                priorityCheckbox.addEventListener('change', () => {
+                                    if (priorityCheckbox.checked) {
+                                        priorityInput.classList.add('line-through');
+                                    } else {
+                                        priorityInput.classList.remove('line-through');
+                                    }
+                                    saveData(); // Salva o estado do checkbox
+                                });
+                            }
+                        }
+
+                        // Adiciona listeners para os campos de tarefa da grade de tempo e categorias
+                        for (let i = 5; i <= 23; i++) {
+                            const hour = i < 10 ? `0${i}` : `${i}`;
+                            const task00 = document.getElementById(`task-${hour}-00`);
+                            const category00 = document.getElementById(`category-${hour}-00`);
+                            const taskCell00 = task00 ? task00.closest('.grid-cell') : null;
+
+                            const task30 = document.getElementById(`task-${hour}-30`);
+                            const category30 = document.getElementById(`category-${hour}-30`);
+                            const taskCell30 = task30 ? task30.closest('.grid-cell') : null;
+
+                            if (task00) task00.addEventListener('input', saveData);
+                            if (category00) {
+                                category00.addEventListener('change', () => {
+                                    applyCategoryOutline(taskCell00, category00.value);
+                                    saveData();
+                                });
+                            }
+                            if (task30) task30.addEventListener('input', saveData);
+                            if (category30) {
+                                category30.addEventListener('change', () => {
+                                    applyCategoryOutline(taskCell30, category30.value);
+                                    saveData();
+                                });
+                            }
+                        }
+
+                        // Função para limpar todos os dados
+                        function clearAllData() {
+                            // Limpa o localStorage
+                            localStorage.clear();
+
+                            // Limpa os campos no DOM
+                            document.getElementById('date').value = '';
+                            document.getElementById('brain-dump').value = '';
+
+                            for (let i = 1; i <= 3; i++) {
+                                const priorityInput = document.getElementById(`priority-${i}`);
+                                const priorityCheckbox = document.getElementById(`priority-checkbox-${i}`);
+                                if (priorityInput) {
+                                    priorityInput.value = '';
+                                    priorityInput.classList.remove('line-through'); // Remove o tachado
+                                }
+                                if (priorityCheckbox) {
+                                    priorityCheckbox.checked = false; // Desmarca o checkbox
+                                }
+                            }
+
+                            for (let i = 5; i <= 23; i++) {
+                                const hour = i < 10 ? `0${i}` : `${i}`;
+                                const task00 = document.getElementById(`task-${hour}-00`);
+                                const category00 = document.getElementById(`category-${hour}-00`);
+                                const taskCell00 = task00 ? task00.closest('.grid-cell') : null;
+
+                                const task30 = document.getElementById(`task-${hour}-30`);
+                                const category30 = document.getElementById(`category-${hour}-30`);
+                                const taskCell30 = task30 ? task30.closest('.grid-cell') : null;
+
+
+                                if (task00) task00.value = '';
+                                if (category00) {
+                                    category00.value = ''; // Reseta a categoria
+                                    applyCategoryOutline(taskCell00, ''); // Remove o contorno
+                                }
+                                if (task30) task30.value = '';
+                                if (category30) {
+                                    category30.value = ''; // Reseta a categoria
+                                    applyCategoryOutline(taskCell30, ''); // Remove o contorno
+                                }
+                            }
+                            console.log('Todos os dados foram limpos!'); // Mensagem de confirmação
+                        }
+
+                        // Adiciona listener ao botão de limpar
+                        const clearButton = document.getElementById('clear-button');
+                        if (clearButton) {
+                            clearButton.addEventListener('click', clearAllData);
+                        }
+
+                        // Adiciona listener ao botão de salvar
+                        const saveButton = document.getElementById('save-button');
+                        if (saveButton) {
+                            saveButton.addEventListener('click', saveData);
+                        }
+
+                        // Carrega os dados quando a página é carregada
+                        loadData();
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
